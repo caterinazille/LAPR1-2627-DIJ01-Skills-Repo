@@ -1,1 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f2ebdf">
+<title>Expyro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --page:#f1eade;
+    --bg:#f2ebdf;
+    --ink:#4a4937;
+    --ink-2:#5f5d49;
+    --card:#e8e2d3;
+    --tan:#d5c8aa;
+    --line:#e3dccd;
+    --dot:#b87444;
+    --leaf:#a3ab82;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--page);
+    font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  svg{display:block;flex-shrink:0}
+
+  /* ---------- Palco / moldura do telemóvel ---------- */
+  .stage{min-height:100%;display:flex;align-items:center;justify-content:center;padding:16px}
+  .phone-wrap{width:calc(418px * var(--s,1));height:calc(845px * var(--s,1));flex-shrink:0}
+  .phone{
+    width:418px;height:845px;
+    transform:scale(var(--s,1));transform-origin:top left;
+    position:relative;display:flex;flex-direction:column;overflow:hidden;
+    background:var(--bg);
+    border:8px solid var(--ink);
+    border-radius:60px;
+    box-shadow:0 30px 60px -20px rgba(74,73,55,.28);
+  }
+  .statusbar{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:6px 26px 0 28px;position:relative;font-weight:600;font-size:15px;letter-spacing:.01em}
+  .island{position:absolute;left:50%;top:20px;transform:translateX(-50%);width:106px;height:29px;border-radius:20px;background:var(--ink)}
+  .status-icons{display:flex;align-items:center;gap:6px}
+
+  /* ---------- Cabeçalho ---------- */
+  .top{display:flex;align-items:center;justify-content:space-between;padding:6px 28px 0 28px;height:62px;flex-shrink:0}
+  .logo{display:flex;align-items:center;gap:6px;margin-left:-4px;padding:0}
+  .logo-word{font-family:'Outfit','Manrope',sans-serif;font-weight:500;font-size:35px;letter-spacing:-.005em;line-height:1;transform:translateY(-1px)}
+  .bell{position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;margin-right:-6px}
+  .bell .dot{position:absolute;top:7px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--dot);border:2px solid var(--bg)}
+
+  /* ---------- Conteúdo ---------- */
+  .view{flex:1;overflow-y:auto;padding:29px 28px 20px;scrollbar-width:none}
+  .view::-webkit-scrollbar{display:none}
+  .title{font-size:32px;font-weight:500;letter-spacing:-.025em;line-height:1.15}
+  .sub{font-size:15.5px;font-weight:400;color:var(--ink-2);margin-top:11px;line-height:1.4}
+  .label{font-size:13.5px;font-weight:600;letter-spacing:.015em;text-transform:uppercase;line-height:1.2}
+  .label-row{display:flex;align-items:center;justify-content:space-between;margin:18px 0 17px}
+  .label-row.tight{margin-top:19px}
+  .link{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:4px;padding:6px 0 6px 12px}
+
+  .banner{margin-top:19px;background:var(--tan);border-radius:17px;height:58px;padding:0 17px;display:flex;align-items:center;gap:12px;font-size:15px;color:var(--ink)}
+
+  .list{display:flex;flex-direction:column;gap:15px}
+  .card{background:var(--card);border-radius:21px;padding:21px 18px;display:flex;align-items:center;gap:15px;text-align:left;width:100%;min-height:98px}
+  button.card{transition:transform .12s ease}
+  button.card:active{transform:scale(.985)}
+  .tile{width:56px;height:56px;border-radius:15px;background:var(--tan);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .card-body{flex:1;min-width:0}
+  .card-name{font-size:18px;font-weight:700;letter-spacing:-.005em;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-meta{font-size:14.5px;color:var(--ink-2);margin-top:5px;line-height:1.3}
+  .urgent-dot{width:9px;height:9px;border-radius:50%;background:var(--dot);flex-shrink:0;margin-right:2px}
+
+  .hero{margin-top:19px;background:var(--tan);border-radius:26px;padding:24px 22px 23px}
+  .hero-name{font-size:24px;font-weight:600;letter-spacing:-.015em;margin-top:18px;line-height:1.25}
+  .hero-date{font-size:15.5px;margin-top:14px;color:var(--ink);line-height:1.4}
+  .hero-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .pill{height:40px;padding:0 15px;border:1.5px solid var(--ink);border-radius:999px;font-size:14.5px;font-weight:500;transition:background .15s,color .15s}
+  .pill:hover,.pill:active{background:var(--ink);color:var(--bg)}
+  .pill.sm{height:34px;padding:0 13px;font-size:13px}
+  .records{display:flex;flex-direction:column;gap:16px}
+
+  .shop{display:flex;flex-direction:column;gap:20px}
+  .shop-item{background:var(--card);border-radius:18px;min-height:61px;display:flex;align-items:center}
+  .shop-main{flex:1;display:flex;align-items:center;gap:16px;padding:0 20px;min-height:61px;text-align:left}
+  .cb{width:23px;height:23px;border:1.5px solid var(--ink);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:transparent;transition:background .15s}
+  .shop-text{font-size:16px;font-weight:400}
+  .shop-item.done .cb{background:var(--ink);color:var(--bg)}
+  .shop-item.done .shop-text{text-decoration:line-through;opacity:.5}
+  .shop-item .x{padding:0 18px 0 6px;height:61px;opacity:.6}
+
+  .tip{margin-top:19px;background:var(--tan);border-radius:25px;padding:22px 21px 24px}
+  .tip h3{font-size:18px;font-weight:700;margin-top:17px;letter-spacing:-.005em;line-height:1.3}
+  .tip p{font-size:15.5px;line-height:1.45;margin-top:14px;color:var(--ink-2)}
+
+  .empty{background:var(--card);border-radius:21px;padding:28px 22px;text-align:center;font-size:15px;color:var(--ink-2);line-height:1.5}
+  .empty strong{display:block;color:var(--ink);font-size:17px;margin-bottom:4px}
+
+  /* ---------- Botão principal + navegação ---------- */
+  .cta{padding:0 28px 18px;flex-shrink:0}
+  .cta[hidden]{display:none}
+  .btn-dark{width:100%;height:51px;border-radius:999px;background:var(--ink);color:var(--bg);font-size:15px;font-weight:500;letter-spacing:.01em;transition:transform .12s}
+  .btn-dark:active{transform:scale(.985)}
+  .tabbar{flex-shrink:0;height:75px;border-top:1px solid var(--line);padding:0 28px;display:flex;justify-content:space-between;align-items:flex-start;position:relative}
+  .tab{width:44px;height:62px;margin:0 -9px;display:flex;align-items:center;justify-content:center;padding-bottom:1px;opacity:.5;transition:opacity .15s}
+  .tab[aria-current="page"]{opacity:1}
+  .home-ind{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);width:120px;height:4px;border-radius:3px;background:var(--ink)}
+
+  /* ---------- Folhas (modais) e aviso ---------- */
+  .sheet-wrap{position:absolute;inset:0;z-index:30;display:flex;align-items:flex-end;background:rgba(74,73,55,.34);animation:fade .2s ease-out}
+  .sheet{width:100%;max-height:90%;overflow-y:auto;background:var(--bg);border-radius:32px 32px 0 0;padding:12px 28px 40px;animation:up .26s cubic-bezier(.2,.8,.2,1);scrollbar-width:none}
+  .sheet::-webkit-scrollbar{display:none}
+  .grab{width:40px;height:4px;border-radius:3px;background:#cfc7b3;margin:0 auto 18px}
+  .sheet h2{font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+  .sheet .lead{font-size:14.5px;color:var(--ink-2);margin-top:6px;line-height:1.4}
+  .sheet .actions{display:flex;gap:10px;margin-top:22px}
+  .sheet .actions>*{flex:1}
+  .btn-ghost{height:51px;border:1.5px solid var(--ink);border-radius:999px;font-size:15px;font-weight:500}
+  .btn-ghost:hover{background:rgba(74,73,55,.07)}
+  .scan{width:100%;margin-top:18px;height:46px;border:1.5px dashed var(--ink);border-radius:999px;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px}
+  form .field{margin-top:14px}
+  form label{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin:0 0 7px 2px}
+  form input,form select{width:100%;height:50px;border:0;border-radius:15px;background:var(--card);padding:0 16px;font:500 15.5px 'Manrope',sans-serif;color:var(--ink);outline:none;appearance:none;-webkit-appearance:none;color-scheme:light}
+  form input:focus,form select:focus{box-shadow:0 0 0 2px var(--ink)}
+  form input::placeholder{color:#8d8a74;font-weight:400}
+  form select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234a4937' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+  form .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  form .btn-dark{margin-top:22px}
+  .alert-list{display:flex;flex-direction:column;gap:12px;margin-top:18px}
+  .alert{background:var(--card);border-radius:18px;padding:15px 16px}
+  .alert b{display:block;font-size:16px;font-weight:700}
+  .alert span{display:block;font-size:13.5px;color:var(--ink-2);margin:3px 0 12px}
+  .alert .btns{display:flex;gap:8px}
+  .team{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+  .team li{list-style:none;background:var(--card);border-radius:15px;padding:13px 16px;display:flex;justify-content:space-between;gap:10px;font-size:14px}
+  .team li b{font-weight:700}
+  .team li span{color:var(--ink-2)}
+  .toast{position:absolute;left:28px;right:28px;bottom:94px;z-index:40;background:var(--ink);color:var(--bg);font-size:14px;font-weight:500;padding:13px 18px;border-radius:999px;text-align:center;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none}
+  .toast.show{opacity:1;transform:none}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes up{from{transform:translateY(100%)}to{transform:none}}
+
+  /* ---------- Telemóvel real: ocupa o ecrã inteiro, sem moldura ---------- */
+  body.is-mobile .stage{padding:0;display:block}
+  body.is-mobile .phone-wrap{width:100%;height:100dvh}
+  body.is-mobile .phone{width:100vw;height:100dvh;transform:none;border:0;border-radius:0;box-shadow:none}
+  body.is-mobile .statusbar,body.is-mobile .home-ind{display:none}
+  body.is-mobile .top{height:auto;padding-top:max(env(safe-area-inset-top),14px);padding-bottom:6px}
+  body.is-mobile .tabbar{height:calc(62px + max(env(safe-area-inset-bottom),8px))}
+  body.is-mobile .view,body.is-mobile .cta,body.is-mobile .top,body.is-mobile .tabbar{padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+  body.is-mobile .cta{padding-bottom:14px}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone-wrap" id="wrap">
+    <div class="phone" id="phone">
+
+      <div class="statusbar" aria-hidden="true">
+        <span>9:41</span>
+        <div class="island"></div>
+        <div class="status-icons">
+          <svg width="19" height="12" viewBox="0 0 19 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="17" height="12" viewBox="0 0 17 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M1.2 4.2a10 10 0 0 1 14.6 0"/><path d="M3.8 7a6.3 6.3 0 0 1 9.4 0"/><path d="M6.4 9.6a2.6 2.6 0 0 1 4.2 0" /></svg>
+          <svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x=".5" y=".5" width="23" height="12" rx="3.8" stroke="currentColor" opacity=".45"/><rect x="2" y="2" width="20" height="9" rx="2.6" fill="currentColor"/><path d="M25 4.5v4c.8-.3 1.5-1.1 1.5-2s-.7-1.7-1.5-2Z" fill="currentColor" opacity=".5"/></svg>
+        </div>
+      </div>
+
+      <header class="top">
+        <button class="logo" onclick="openAbout()" aria-label="Expyro — sobre o projeto">
+          <svg width="60" height="44" viewBox="0 0 60 44" fill="none" aria-hidden="true">
+            <path d="M33 9C41 3 51 3 59 6C56 15 49 21 41 23C36 20 32 15 33 9Z" fill="#a3ab82"/>
+            <path d="M9 22H31C31 11 21 6 13 11C5 16 8 29 19 32C27 34 34 30 38 26" stroke="#464430" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M40 27C48 24 56 28 58 37C50 40 42 35 40 27Z" fill="#464430"/>
+          </svg>
+          <span class="logo-word">expyro</span>
+        </button>
+        <button class="bell" id="bell" onclick="openAlerts()" aria-label="Alertas de validade"></button>
+      </header>
+
+      <main class="view" id="view"></main>
+      <div class="cta" id="cta"></div>
+
+      <nav class="tabbar" aria-label="Navegação principal">
+        <button class="tab" id="tab-cozinha"  onclick="go('cozinha')"  aria-label="A minha cozinha"></button>
+        <button class="tab" id="tab-consumo"  onclick="go('consumo')"  aria-label="O meu consumo"></button>
+        <button class="tab" id="tab-compras"  onclick="go('compras')"  aria-label="Próximas compras"></button>
+        <div class="home-ind"></div>
+      </nav>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div id="sheet-root"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ Utilitários ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MONTHS = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const pad = n => String(n).padStart(2,'0');
+let _uid = Date.now();
+const uid = () => ++_uid;
+
+function iso(offset){
+  const d = new Date(); d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function parts(s){ const [y,m,d] = s.split('-').map(Number); return {y,m,d}; }
+const fmtFull  = s => { const {y,m,d} = parts(s); return `${d} ${MONTHS[m-1]} ${y}`; };
+const fmtShort = s => { const {m,d} = parts(s); return `${d} ${MONTHS[m-1]}`; };
+function daysLeft(s){
+  const t = new Date(); t.setHours(0,0,0,0);
+  const {y,m,d} = parts(s);
+  return Math.round((new Date(y,m-1,d) - t) / 86400000);
+}
+const lcFirst = s => s.charAt(0).toLowerCase() + s.slice(1);
+const ucFirst = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+/* ============ Ícones (traço fino, 24×24) ============ */
+const ICON = {
+  bell:'<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  leaf:'<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+  cherry:'<path d="M2 17a5 5 0 0 0 10 0c0-2.76-2.5-5-5-3-2.5-2-5 .24-5 3Z"/><path d="M12 17a5 5 0 0 0 10 0c0-2.76-2.5-5-5-3-2.5-2-5 .24-5 3Z"/><path d="M7 14c3.22-2.91 4.29-8.75 5-12 1.66 2.38 4.94 9 5 12"/><path d="M22 9c-4.29 0-7.14-2.33-10-7 5.71 0 10 4.67 10 7Z"/>',
+  milk:'<path d="M8 2h8"/><path d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2"/><path d="M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/>',
+  apple:'<path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/>',
+  drumstick:'<path d="M15.4 15.63a7.875 6 135 1 1 6.23-6.23 4.5 3.43 135 0 0-6.23 6.23"/><path d="m8.29 12.71-2.6 2.6a2.5 2.5 0 1 0-1.65 4.65A2.5 2.5 0 1 0 8.7 18.3l2.59-2.59"/>',
+  wheat:'<path d="M2 22 16 8"/><path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z"/><path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z"/><path d="M11.47 17.47 13 19l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L5 19l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M15.47 13.47 17 15l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L9 15l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/><path d="M19.47 9.47 21 11l-1.53 1.53a3.5 3.5 0 0 1-4.94 0L13 11l1.53-1.53a3.5 3.5 0 0 1 4.94 0Z"/>',
+  package:'<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  house:'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  clipboard:'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  chart:'<path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>',
+  sparkles:'<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 7v10"/><path d="M12 7v10"/><path d="M16 7v10"/>'
+};
+const ic = (n, s = 24, w = 1.6) =>
+  `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+
+function iconFor(name, category){
+  const n = name.toLowerCase();
+  if (/morang|cereja|uva|framboes|mirtilo/.test(n)) return 'cherry';
+  if (/ma[cç][aã]|pera|pêra/.test(n)) return 'apple';
+  switch (category) {
+    case 'Laticínios': return 'milk';
+    case 'Frutas e Legumes': return 'leaf';
+    case 'Carne e Peixe': return 'drumstick';
+    case 'Padaria':
+    case 'Mercearia': return 'wheat';
+    default: return 'package';
+  }
+}
+
+/* ============ Dados iniciais (datas relativas a hoje) ============ */
+const seed = () => ({
+  products: [
+    { id:1, name:'Espinafres',      art:'Os', plural:true,  category:'Frutas e Legumes', location:'Frigorífico', qty:'200 g',  expiry:iso(1) },
+    { id:2, name:'Morangos',        art:'Os', plural:true,  category:'Frutas e Legumes', location:'Frigorífico', qty:'250 g',  expiry:iso(3) },
+    { id:3, name:'Iogurte natural', art:'O',  plural:false, category:'Laticínios',       location:'Frigorífico', qty:'2 un.',  expiry:iso(6) }
+  ],
+  records: [
+    { id:11, name:'Maçãs',  category:'Frutas e Legumes', kind:'consumed', date:iso(-1) },
+    { id:12, name:'Alface', category:'Frutas e Legumes', kind:'wasted',   date:iso(-3) }
+  ],
+  shopping: [
+    { id:21, name:'Maçãs',           qty:'4 un.', checked:false },
+    { id:22, name:'Ovos',            qty:'6 un.', checked:false },
+    { id:23, name:'Iogurte natural', qty:'2 un.', checked:false }
+  ],
+  waste: [ { name:'Espinafres', count:2 }, { name:'Alface', count:1 } ]
+});
+
+let S = Object.assign(seed(), { tab:'cozinha', selectedId:null, pending:null, sheet:null });
+
+/* ============ Ecrã 1 — A minha cozinha ============ */
+const sortedProducts = () => [...S.products].sort((a,b) => a.expiry.localeCompare(b.expiry));
+
+function bannerHTML(){
+  const first = sortedProducts()[0];
+  if (!first || daysLeft(first.expiry) > 2) {
+    return `<div class="banner">${ic('leaf',22)}<span>Nada a expirar nos próximos dias.</span></div>`;
+  }
+  const d = daysLeft(first.expiry);
+  const subject = first.art ? `${first.art} ${lcFirst(first.name)}` : ucFirst(first.name);
+  const plural = first.plural;
+  let verb, when;
+  if (d < 0)      { verb = plural ? 'expiraram' : 'expirou'; when = ` há ${-d} dia${-d > 1 ? 's' : ''}`; }
+  else if (d === 0){ verb = plural ? 'expiram' : 'expira';   when = ' hoje'; }
+  else if (d === 1){ verb = plural ? 'expiram' : 'expira';   when = ' amanhã'; }
+  else             { verb = plural ? 'expiram' : 'expira';   when = ` em ${d} dias`; }
+  return `<div class="banner">${ic('clock',22)}<span>${esc(subject)} ${verb}${when}.</span></div>`;
+}
+
+function viewKitchen(){
+  const items = sortedProducts();
+  return `
+    <h1 class="title">A minha cozinha</h1>
+    <p class="sub">Primeiro a entrar no prato.</p>
+    ${bannerHTML()}
+    <div class="label-row"><h2 class="label">Por data de validade</h2></div>
+    <div class="list">
+      ${items.length ? items.map(p => `
+        <button class="card" onclick="openProduct(${p.id})">
+          <div class="tile">${ic(iconFor(p.name,p.category),28,1.5)}</div>
+          <div class="card-body">
+            <div class="card-name">${esc(p.name)}</div>
+            <div class="card-meta">${esc(p.qty)} · ${fmtFull(p.expiry)}</div>
+          </div>
+          ${daysLeft(p.expiry) <= 1 ? '<span class="urgent-dot" aria-label="A expirar"></span>' : ''}
+        </button>`).join('') :
+        `<div class="empty"><strong>Despensa vazia</strong>Regista o primeiro produto para começares a acompanhar as validades.</div>`}
+    </div>`;
+}
+
+/* ============ Ecrã 2 — O meu consumo ============ */
+function featured(){
+  return S.products.find(p => p.id === S.selectedId) || sortedProducts()[0] || null;
+}
+function viewConsumo(){
+  const p = featured();
+  const hero = p ? `
+    <section class="hero">
+      ${ic(iconFor(p.name,p.category),38,1.4)}
+      <div class="hero-name">${esc(p.name)}</div>
+      <div class="hero-date">Validade: ${fmtFull(p.expiry)}</div>
+      <div class="hero-actions">
+        <button class="pill" onclick="consume(${p.id})">Consumido</button>
+        <button class="pill" onclick="waste(${p.id})">Desperdiçado</button>
+      </div>
+    </section>` : `
+    <section class="hero">
+      ${ic('leaf',38,1.4)}
+      <div class="hero-name">Despensa vazia</div>
+      <div class="hero-date">Regista um produto para o poderes marcar aqui.</div>
+    </section>`;
+  return `
+    <h1 class="title">O meu consumo</h1>
+    <p class="sub">Conhecer os hábitos. Mudar aos poucos.</p>
+    ${hero}
+    <div class="label-row" style="margin-top:22px"><h2 class="label">Registos de consumo</h2></div>
+    <div class="records">
+      ${S.records.length ? S.records.map(r => `
+        <div class="card" style="min-height:98px">
+          <div class="tile" style="width:56px;height:56px">${ic(iconFor(r.name,r.category),28,1.5)}</div>
+          <div class="card-body">
+            <div class="card-name">${esc(r.name)}</div>
+            <div class="card-meta">${r.kind === 'consumed' ? 'Consumido' : 'Desperdiçado'} · ${fmtShort(r.date)}</div>
+          </div>
+        </div>`).join('') :
+        `<div class="empty"><strong>Sem registos</strong>Marca os produtos como consumidos ou desperdiçados para ver o histórico.</div>`}
+    </div>`;
+}
+
+/* ============ Ecrã 3 — Próximas compras ============ */
+function tipHTML(){
+  const top = [...S.waste].sort((a,b) => b.count - a.count)[0];
+  let title = 'Menos quantidade, mais proveito', text;
+  if (top && top.count >= 2)      text = `Costumas desperdiçar ${esc(lcFirst(top.name))}. Experimenta comprar uma embalagem mais pequena.`;
+  else if (top && top.count === 1) text = `Desperdiçaste ${esc(lcFirst(top.name))} há pouco. Da próxima vez, experimenta comprar menos.`;
+  else { title = 'Tudo a ser aproveitado'; text = 'Ainda não há desperdícios registados. Continua assim!'; }
+  return `<section class="tip">${ic('sparkles',32,1.4)}<h3>${title}</h3><p>${text}</p></section>`;
+}
+function viewCompras(){
+  return `
+    <h1 class="title">Próximas compras</h1>
+    <p class="sub">Compra apenas o que precisas.</p>
+    <div class="label-row" style="margin-top:22px;margin-bottom:16px">
+      <h2 class="label">Lista de compras</h2>
+      <button class="link" onclick="openShopAdd()">${ic('plus',15,2)} Adicionar</button>
+    </div>
+    <div class="shop">
+      ${S.shopping.length ? S.shopping.map(i => `
+        <div class="shop-item ${i.checked ? 'done' : ''}">
+          <button class="shop-main" onclick="toggleShop(${i.id})" aria-pressed="${i.checked}">
+            <span class="cb">${i.checked ? ic('check',16,2.6) : ''}</span>
+            <span class="shop-text">${esc(i.name)}${i.qty ? ' · ' + esc(i.qty) : ''}</span>
+          </button>
+          ${i.checked ? `<button class="x" onclick="removeShop(${i.id})" aria-label="Remover da lista">${ic('x',18,1.8)}</button>` : ''}
+        </div>`).join('') :
+        `<div class="empty"><strong>Lista vazia</strong>Adiciona o que precisas de comprar.</div>`}
+    </div>
+    ${tipHTML()}`;
+}
+
+/* ============ Render principal ============ */
+function render(){
+  const view = $('#view'), top = view.scrollTop;
+  view.innerHTML = S.tab === 'cozinha' ? viewKitchen() : S.tab === 'consumo' ? viewConsumo() : viewCompras();
+  view.scrollTop = top;
+
+  const cta = $('#cta');
+  cta.hidden = S.tab !== 'cozinha';
+  cta.innerHTML = S.tab === 'cozinha' ? `<button class="btn-dark" onclick="openAdd()">+ Registar produto</button>` : '';
+
+  const tabIcons = { cozinha:'house', consumo:'clipboard', compras:'chart' };
+  for (const [k, name] of Object.entries(tabIcons)) {
+    const b = $('#tab-' + k);
+    b.innerHTML = ic(name, 26, 1.6);
+    if (k === S.tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+  }
+
+  $('#bell').innerHTML = ic('bell',28,1.6);
+}
+function go(tab){ S.tab = tab; if (tab !== 'consumo') S.selectedId = null; $('#view').scrollTop = 0; render(); }
+function openProduct(id){ S.selectedId = id; go('consumo'); S.selectedId = id; render(); }
+
+/* ============ Ações ============ */
+function consume(id){
+  const p = S.products.find(x => x.id === id); if (!p) return;
+  S.products = S.products.filter(x => x.id !== id);
+  S.records.unshift({ id:uid(), name:p.name, category:p.category, kind:'consumed', date:iso(0) });
+  S.pending = p; S.selectedId = null;
+  render(); openRestock(p);
+}
+function waste(id){
+  const p = S.products.find(x => x.id === id); if (!p) return;
+  S.products = S.products.filter(x => x.id !== id);
+  S.records.unshift({ id:uid(), name:p.name, category:p.category, kind:'wasted', date:iso(0) });
+  const w = S.waste.find(x => x.name.toLowerCase() === p.name.toLowerCase());
+  if (w) w.count++; else S.waste.push({ name:p.name, count:1 });
+  S.selectedId = null;
+  render(); closeSheet(); toast(`${p.name} registado como desperdício.`);
+}
+function toggleShop(id){ const i = S.shopping.find(x => x.id === id); if (i) i.checked = !i.checked; render(); }
+function removeShop(id){ S.shopping = S.shopping.filter(x => x.id !== id); render(); }
+
+/* ============ Folhas (modais) ============ */
+function openSheet(kind, html){
+  S.sheet = kind;
+  $('#sheet-root').innerHTML = `
+    <div class="sheet-wrap" onclick="if(event.target===this)dismissSheet()">
+      <div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div>
+    </div>`;
+}
+function closeSheet(){ S.sheet = null; $('#sheet-root').innerHTML = ''; }
+function dismissSheet(){ if (S.sheet === 'restock') closeRestock(false); else closeSheet(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) dismissSheet(); });
+
+/* — Registar produto — */
+const samples = [
+  { name:'Queijo flamengo fatiado', category:'Laticínios',       location:'Frigorífico', qty:'200 g',   days:2 },
+  { name:'Salmão fresco',           category:'Carne e Peixe',    location:'Frigorífico', qty:'2 postas',days:1 },
+  { name:'Tomate chucha',           category:'Frutas e Legumes', location:'Frigorífico', qty:'500 g',   days:4 },
+  { name:'Massa esparguete',        category:'Mercearia',        location:'Armário',     qty:'500 g',   days:180 }
+];
+let sampleIdx = 0;
+const opts = list => list.map(o => `<option>${o}</option>`).join('');
+
+function openAdd(){
+  openSheet('add', `
+    <h2>Registar produto</h2>
+    <p class="lead">Adiciona alimentos à tua cozinha.</p>
+    <button type="button" class="scan" onclick="scan()">${ic('scan',18,1.8)} Simular leitura de código de barras</button>
+    <form onsubmit="saveProduct(event)">
+      <div class="field"><label for="f-name">Nome do produto</label>
+        <input id="f-name" required maxlength="40" placeholder="Ex.: Leite meio-gordo" autocomplete="off"></div>
+      <div class="row">
+        <div class="field"><label for="f-cat">Categoria</label>
+          <select id="f-cat">${opts(['Laticínios','Frutas e Legumes','Carne e Peixe','Mercearia','Padaria','Outros'])}</select></div>
+        <div class="field"><label for="f-loc">Localização</label>
+          <select id="f-loc">${opts(['Frigorífico','Armário','Congelador'])}</select></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="f-qty">Quantidade</label>
+          <input id="f-qty" required maxlength="20" value="1 un."></div>
+        <div class="field"><label for="f-exp">Validade</label>
+          <input id="f-exp" type="date" required value="${iso(3)}"></div>
+      </div>
+      <button type="submit" class="btn-dark">Guardar na cozinha</button>
+    </form>`);
+}
+function scan(){
+  const s = samples[sampleIdx++ % samples.length];
+  $('#f-name').value = s.name; $('#f-cat').value = s.category; $('#f-loc').value = s.location;
+  $('#f-qty').value = s.qty;   $('#f-exp').value = iso(s.days);
+  toast('Código de barras lido!');
+}
+function saveProduct(e){
+  e.preventDefault();
+  const p = { id:uid(), name:ucFirst($('#f-name').value.trim()), category:$('#f-cat').value, location:$('#f-loc').value,
+              qty:$('#f-qty').value.trim(), expiry:$('#f-exp').value };
+  S.products.push(p);
+  closeSheet(); go('cozinha'); toast(`${p.name} adicionado à cozinha.`);
+}
+
+/* — Adicionar à lista de compras — */
+function openShopAdd(){
+  openSheet('shop', `
+    <h2>Adicionar à lista</h2>
+    <p class="lead">O que precisas de comprar?</p>
+    <form onsubmit="saveShop(event)">
+      <div class="row" style="grid-template-columns:1.6fr 1fr">
+        <div class="field"><label for="s-name">Produto</label><input id="s-name" required maxlength="40" placeholder="Ex.: Ovos" autocomplete="off"></div>
+        <div class="field"><label for="s-qty">Qtd.</label><input id="s-qty" maxlength="20" placeholder="6 un."></div>
+      </div>
+      <button type="submit" class="btn-dark">Adicionar</button>
+    </form>`);
+  setTimeout(() => { const el = $('#s-name'); el && el.focus({ preventScroll:true }); }, 280);
+}
+function saveShop(e){
+  e.preventDefault();
+  S.shopping.push({ id:uid(), name:ucFirst($('#s-name').value.trim()), qty:$('#s-qty').value.trim(), checked:false });
+  closeSheet(); render();
+}
+
+/* — Reposição após consumo — */
+function openRestock(p){
+  openSheet('restock', `
+    <h2>Bom proveito!</h2>
+    <p class="lead">Consumiste <strong>${esc(lcFirst(p.name))}</strong>. Queres adicionar à lista de compras?</p>
+    <div class="actions">
+      <button class="btn-ghost" onclick="closeRestock(false)">Agora não</button>
+      <button class="btn-dark" onclick="closeRestock(true)">Adicionar</button>
+    </div>`);
+}
+function closeRestock(add){
+  const p = S.pending; S.pending = null; closeSheet();
+  if (p && add) {
+    S.shopping.unshift({ id:uid(), name:p.name, qty:p.qty, checked:false });
+    toast(`${p.name} adicionado à lista de compras.`);
+  } else toast('Registado como consumido.');
+  render();
+}
+
+/* — Alertas — */
+function openAlerts(){
+  const list = sortedProducts().filter(p => daysLeft(p.expiry) <= 3);
+  openSheet('alerts', `
+    <h2>Alertas de validade</h2>
+    <p class="lead">${list.length ? 'Produtos a consumir em primeiro lugar.' : 'Tudo dentro do prazo.'}</p>
+    ${list.length ? `<div class="alert-list">${list.map(p => {
+      const d = daysLeft(p.expiry);
+      const when = d < 0 ? `Expirou há ${-d} dia${-d > 1 ? 's' : ''}` : d === 0 ? 'Expira hoje' : d === 1 ? 'Expira amanhã' : `Expira em ${d} dias`;
+      return `<div class="alert"><b>${esc(p.name)}</b><span>${when} · ${fmtFull(p.expiry)}</span>
+        <div class="btns"><button class="pill sm" onclick="consume(${p.id})">Consumido</button><button class="pill sm" onclick="waste(${p.id})">Desperdiçado</button></div></div>`;
+    }).join('')}</div>` : ''}`);
+}
+
+/* — Sobre o projeto — */
+function openAbout(){
+  openSheet('about', `
+    <h2>Expyro</h2>
+    <p class="lead">Combate o desperdício alimentar doméstico: validades ordenadas, alertas preventivos e análise dos hábitos de consumo.<br>ISEP · LAPR1 · Equipa CTJF</p>
+    <ul class="team">
+      <li><b>Filipa Costa</b><span>1261055 · Conteúdos</span></li>
+      <li><b>Tiago Andrade</b><span>1261483 · Desenv. Web</span></li>
+      <li><b>Caterina Zille</b><span>1261160 · Design &amp; UX</span></li>
+      <li><b>João Barroso</b><span>1260917 · Acessibilidade</span></li>
+    </ul>
+    <div class="actions"><button class="btn-ghost" onclick="resetDemo()">Repor dados de demonstração</button></div>`);
+}
+function resetDemo(){
+  S = Object.assign(seed(), { tab:'cozinha', selectedId:null, pending:null, sheet:null });
+  closeSheet(); render(); toast('Dados repostos.');
+}
+
+/* ============ Aviso (toast) ============ */
+let toastTimer;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* ============ Ajuste ao ecrã: moldura no computador, ecrã inteiro no telemóvel ============ */
+function fit(){
+  const mobile = window.innerWidth <= 480;
+  document.body.classList.toggle('is-mobile', mobile);
+  const s = mobile ? 1 : Math.min(1, (window.innerHeight - 32) / 845, (window.innerWidth - 32) / 418);
+  document.documentElement.style.setProperty('--s', Math.max(s, .5));
+}
+window.addEventListener('resize', fit);
+fit(); render();
+</script>
+</body>
+</html>
 
