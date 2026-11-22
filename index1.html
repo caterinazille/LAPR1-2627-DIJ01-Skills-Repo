@@ -1,0 +1,1089 @@
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expyro - Protótipo Interativo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Personalização subtil da barra de deslocação dentro do ecrã do telemóvel */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.25s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-200 min-h-screen flex flex-col items-center justify-start p-2 sm:p-5 font-sans text-slate-800 transition-colors">
+
+    <!-- Barra Superior de Demonstração com Seletor de Dispositivo (Computador, Tablet, Telemóvel) -->
+    <div class="max-w-6xl w-full mb-4 bg-white/95 backdrop-blur-sm px-4 py-2.5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600 z-30">
+        <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="font-bold text-slate-900">Protótipo Responsivo Expyro</span>
+            <span class="hidden sm:inline text-slate-400">|</span>
+            <span class="hidden sm:inline text-slate-500">LAPR1 • ISEP</span>
+        </div>
+
+        <!-- Seletor Rápido de Vista para Apresentação e Defesa -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/60" role="group" aria-label="Modo de visualização do dispositivo">
+            <button onclick="setViewport('desktop')" id="vp-desktop" class="vp-btn px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all bg-white text-emerald-700 shadow-xs cursor-pointer">
+                <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+                <span>Computador</span>
+            </button>
+            <button onclick="setViewport('tablet')" id="vp-tablet" class="vp-btn px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all text-slate-600 hover:text-slate-900 cursor-pointer">
+                <i data-lucide="tablet" class="w-3.5 h-3.5"></i>
+                <span>Tablet</span>
+            </button>
+            <button onclick="setViewport('mobile')" id="vp-mobile" class="vp-btn px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all text-slate-600 hover:text-slate-900 cursor-pointer">
+                <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                <span>Telemóvel</span>
+            </button>
+        </div>
+
+        <button onclick="resetDemoData()" class="text-emerald-700 hover:text-emerald-800 font-semibold px-2.5 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>Repor Dados</span>
+        </button>
+    </div>
+
+    <!-- Contentor Adaptativo da Aplicação (Computador / Tablet / Telemóvel) -->
+    <div id="device-shell" class="relative w-full max-w-6xl h-[82vh] min-h-[640px] bg-slate-50 rounded-3xl shadow-2xl border border-slate-300/90 overflow-hidden flex flex-col transition-all duration-300 ease-out">
+        
+        <!-- Barra de Estado Simulada (Visível apenas no modo Telemóvel) -->
+        <div id="mobile-status-bar" class="hidden bg-white px-6 pt-2.5 pb-1 justify-between items-center text-[11px] font-semibold text-slate-700 select-none shrink-0">
+            <span id="clock-time">16:20</span>
+            <div class="w-24 h-4 bg-slate-900 rounded-full mx-auto"></div>
+            <div class="flex items-center gap-1.5">
+                <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+                <i data-lucide="battery-full" class="w-4 h-4 text-emerald-600"></i>
+            </div>
+        </div>
+
+        <!-- Corpo Principal com Navegação Lateral (Desktop/Tablet) + Área de Trabalho -->
+        <div class="flex flex-1 overflow-hidden relative">
+
+            <!-- Menu Lateral (Sidebar - Computador e Tablet) -->
+            <aside id="sidebar-nav" class="flex flex-col justify-between w-64 bg-white border-r border-slate-200/80 p-4 shrink-0 transition-all duration-300">
+                <div class="space-y-6">
+                    <!-- Identidade da Marca no Menu Lateral -->
+                    <div class="flex items-center gap-3 px-1">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-md shadow-emerald-500/20 relative shrink-0">
+                            <i data-lucide="leaf" class="w-5 h-5"></i>
+                            <div class="absolute -bottom-1 -right-1 bg-amber-400 text-slate-900 rounded-full p-0.5 border-2 border-white">
+                                <i data-lucide="clock" class="w-2.5 h-2.5 stroke-[2.5]"></i>
+                            </div>
+                        </div>
+                        <div class="sidebar-label overflow-hidden">
+                            <h1 class="font-extrabold text-lg tracking-tight text-slate-900 leading-none">Expyro</h1>
+                            <p class="text-[11px] text-emerald-700 font-medium mt-1 truncate">Despensa sustentável</p>
+                        </div>
+                    </div>
+
+                    <!-- Botão Principal: Registar Produto -->
+                    <button onclick="openAddModal()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                        <i data-lucide="plus-circle" class="w-4 h-4 shrink-0"></i>
+                        <span class="sidebar-label">Registar Produto</span>
+                    </button>
+
+                    <!-- Links de Navegação Lateral -->
+                    <nav class="space-y-1.5" aria-label="Navegação Principal">
+                        <button onclick="switchTab('inventario')" id="side-inventario" class="side-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-emerald-700 bg-emerald-50 font-semibold text-xs transition-all cursor-pointer">
+                            <i data-lucide="refrigerator" class="w-4 h-4 shrink-0"></i>
+                            <span class="sidebar-label">Despensa & Validades</span>
+                        </button>
+
+                        <button onclick="switchTab('compras')" id="side-compras" class="side-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-xs transition-all cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <i data-lucide="shopping-cart" class="w-4 h-4 shrink-0"></i>
+                                <span class="sidebar-label">Lista de Compras</span>
+                            </div>
+                            <span id="side-cart-badge" class="sidebar-label hidden px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 rounded-full">0</span>
+                        </button>
+
+                        <button onclick="switchTab('habitos')" id="side-habitos" class="side-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-xs transition-all cursor-pointer">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 shrink-0"></i>
+                            <span class="sidebar-label">Hábitos & Poupança</span>
+                        </button>
+
+                        <button onclick="switchTab('sobre')" id="side-sobre" class="side-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-xs transition-all cursor-pointer">
+                            <i data-lucide="info" class="w-4 h-4 shrink-0"></i>
+                            <span class="sidebar-label">Sobre o Projeto</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Cartão Informativo de Poupança no Rodapé da Sidebar -->
+                <div class="sidebar-label p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/70 space-y-1">
+                    <div class="flex items-center gap-1.5 text-amber-800 font-bold text-xs">
+                        <i data-lucide="piggy-bank" class="w-4 h-4 text-amber-600"></i>
+                        <span>Impacto Estimado</span>
+                    </div>
+                    <p class="text-[11px] text-amber-900/80 leading-snug">
+                        Poupança estimada de <strong id="sidebar-savings">27,00 €</strong> este mês ao evitar desperdícios.
+                    </p>
+                </div>
+            </aside>
+
+            <!-- Coluna Direita: Cabeçalho Superior + Conteúdo Principal -->
+            <div class="flex-1 flex flex-col overflow-hidden bg-slate-50/70">
+                
+                <!-- Cabeçalho Superior -->
+                <header class="bg-white px-5 py-3.5 border-b border-slate-200/70 flex items-center justify-between shrink-0 z-10">
+                    <!-- Logótipo visível apenas no modo Telemóvel (quando a sidebar está oculta) -->
+                    <div id="mobile-header-brand" class="hidden items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-sm relative">
+                            <i data-lucide="leaf" class="w-4 h-4"></i>
+                            <div class="absolute -bottom-1 -right-1 bg-amber-400 text-slate-900 rounded-full p-0.5 border-2 border-white">
+                                <i data-lucide="clock" class="w-2 h-2 stroke-[2.5]"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h1 class="font-extrabold text-base tracking-tight text-slate-900 leading-none">Expyro</h1>
+                            <p class="text-[10px] text-emerald-700 font-medium mt-0.5">Gestão inteligente</p>
+                        </div>
+                    </div>
+
+                    <!-- Título Dinâmico da Secção (Visível em Computador e Tablet) -->
+                    <div id="desktop-header-title" class="block">
+                        <h2 id="page-title" class="font-bold text-base sm:text-lg text-slate-900 leading-tight">Despensa & Controlo de Validades</h2>
+                        <p id="page-subtitle" class="text-xs text-slate-500">Produtos ordenados automaticamente por data de expiração</p>
+                    </div>
+
+                    <!-- Ações Rápidas do Cabeçalho -->
+                    <div class="flex items-center gap-2.5">
+                        <button onclick="openAddModal()" id="header-add-btn" class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs transition-colors cursor-pointer">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Novo Item</span>
+                        </button>
+
+                        <!-- Botão de Notificações Inteligentes -->
+                        <button onclick="toggleNotifications()" class="relative p-2.5 rounded-xl bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-700 transition-colors cursor-pointer" aria-label="Notificações">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                            <span id="notif-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                0
+                            </span>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Área Principal de Conteúdo (Scrollable) -->
+                <main id="app-content" class="flex-1 overflow-y-auto no-scrollbar p-4 sm:p-6 pb-24 space-y-5">
+                    <!-- O conteúdo dinâmico das vistas é renderizado aqui via JavaScript -->
+                </main>
+            </div>
+        </div>
+
+        <!-- Toast / Mensagem de Feedback Não-Intrusiva -->
+        <div id="toast-container" class="absolute bottom-20 sm:bottom-6 right-4 sm:right-6 left-4 sm:left-auto sm:max-w-sm z-30 pointer-events-none flex flex-col gap-2"></div>
+
+        <!-- Barra de Navegação Inferior (Visível apenas no modo Telemóvel) -->
+        <nav id="bottom-nav" class="hidden bg-white border-t border-slate-200/80 px-2 py-2 items-center justify-around shrink-0 z-20 relative">
+            <button onclick="switchTab('inventario')" id="nav-inventario" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-emerald-700 bg-emerald-50/80 transition-all w-16 cursor-pointer">
+                <i data-lucide="refrigerator" class="w-5 h-5"></i>
+                <span class="text-[10px] font-semibold">Despensa</span>
+            </button>
+
+            <button onclick="switchTab('compras')" id="nav-compras" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:text-slate-700 transition-all w-16 relative cursor-pointer">
+                <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Compras</span>
+                <span id="cart-count-badge" class="hidden absolute top-1.5 right-3 w-2 h-2 bg-emerald-500 rounded-full"></span>
+            </button>
+
+            <!-- Botão Central de Destaque: Adicionar Produto -->
+            <button onclick="openAddModal()" class="flex flex-col items-center justify-center -mt-6 w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-600/30 hover:scale-105 active:scale-95 transition-transform cursor-pointer" aria-label="Registar Produto">
+                <i data-lucide="plus" class="w-7 h-7 stroke-[2.5]"></i>
+            </button>
+
+            <button onclick="switchTab('habitos')" id="nav-habitos" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:text-slate-700 transition-all w-16 cursor-pointer">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Hábitos</span>
+            </button>
+
+            <button onclick="switchTab('sobre')" id="nav-sobre" class="nav-btn flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:text-slate-700 transition-all w-16 cursor-pointer">
+                <i data-lucide="info" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium">Projeto</span>
+            </button>
+        </nav>
+
+        <!-- MODAL 1: Registar Novo Produto (Adaptativo: Bottom-sheet no telemóvel, Modal centrado no PC/Tablet) -->
+        <div id="add-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-40 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
+            <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl animate-slide-up max-h-[92%] overflow-y-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Registar Produto</h2>
+                        <p class="text-xs text-slate-500">Adicione alimentos ao inventário doméstico</p>
+                    </div>
+                    <button onclick="closeAddModal()" class="p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 cursor-pointer">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Simulação de Leitor de Código de Barras -->
+                <button type="button" onclick="simulateBarcodeScan()" class="w-full mb-4 py-2.5 px-4 rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/60 hover:bg-emerald-100/70 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                    <i data-lucide="scan-barcode" class="w-4 h-4 text-emerald-600"></i>
+                    <span>Simular Leitura de Código de Barras</span>
+                </button>
+
+                <form id="add-product-form" onsubmit="handleAddProduct(event)" class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nome do Produto *</label>
+                        <input type="text" id="prod-name" required placeholder="Ex: Leite Meio-Gordo, Peito de Frango..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Categoria</label>
+                            <select id="prod-category" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                                <option value="Laticínios">Laticínios</option>
+                                <option value="Frutas e Legumes">Frutas e Legumes</option>
+                                <option value="Carne e Peixe">Carne e Peixe</option>
+                                <option value="Mercearia">Mercearia</option>
+                                <option value="Padaria">Padaria</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Localização</label>
+                            <select id="prod-location" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                                <option value="Frigorífico">Frigorífico</option>
+                                <option value="Armário">Armário</option>
+                                <option value="Congelador">Congelador</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Quantidade</label>
+                            <input type="text" id="prod-qty" value="1 unidade" required placeholder="Ex: 4 un, 500g" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Data de Validade *</label>
+                            <input type="date" id="prod-expiry" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full mt-2 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
+                        Guardar na Despensa
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL 2: Painel de Notificações Inteligentes -->
+        <div id="notif-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-40 flex items-start justify-center sm:justify-end pt-16 px-4 sm:pr-6 animate-fade-in">
+            <div class="bg-white w-full sm:max-w-md rounded-3xl p-4 sm:p-5 shadow-2xl border border-slate-100 max-h-[75%] flex flex-col">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <div class="p-1.5 rounded-lg bg-amber-100 text-amber-600">
+                            <i data-lucide="bell-ring" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-900 text-sm">Alertas de Validade</h3>
+                    </div>
+                    <button onclick="toggleNotifications()" class="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div id="notif-list" class="overflow-y-auto py-3 space-y-2.5 no-scrollbar">
+                    <!-- Notificações geradas dinamicamente -->
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 3: Pergunta de Reposição após Consumo -->
+        <div id="restock-modal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-5 animate-fade-in">
+            <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                    <i data-lucide="check-circle-2" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Produto Consumido!</h3>
+                    <p id="restock-text" class="text-xs text-slate-600 mt-1">Deseja adicionar este produto à sua lista de compras personalizada?</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <button onclick="closeRestockModal(false)" class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer">
+                        Não, obrigado
+                    </button>
+                    <button onclick="closeRestockModal(true)" class="py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm cursor-pointer">
+                        Adicionar à Lista
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Utilitário para gerar datas relativas ao dia de hoje (para que o protótipo funcione sempre com datas realistas)
+        function getRelativeDate(daysOffset) {
+            const date = new Date();
+            date.setDate(date.getDate() + daysOffset);
+            return date.toISOString().split('T')[0];
+        }
+
+        // Calcular dias restantes até à data de validade
+        function getDaysUntilExpiry(expiryDateStr) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const [year, month, day] = expiryDateStr.split('-').map(Number);
+            const expiry = new Date(year, month - 1, day);
+            expiry.setHours(0, 0, 0, 0);
+            const diffTime = expiry - today;
+            return Math.round(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        // Amostras para a simulação de leitura de código de barras
+        const barcodeSamples = [
+            { name: "Queijo Flamengo Fatiado", category: "Laticínios", location: "Frigorífico", qty: "200g", days: 2 },
+            { name: "Salmão Fresco em Postas", category: "Carne e Peixe", location: "Frigorífico", qty: "2 unidades", days: 1 },
+            { name: "Tomate Chucha", category: "Frutas e Legumes", location: "Frigorífico", qty: "500g", days: 4 },
+            { name: "Massa Esparguete", category: "Mercearia", location: "Armário", qty: "500g", days: 180 }
+        ];
+        let sampleIndex = 0;
+
+        // Dados iniciais realistas em Português de Portugal
+        const initialProducts = [
+            { id: 1, name: "Iogurtes Naturais (Pack 4)", category: "Laticínios", location: "Frigorífico", qty: "2 unidades", expiry: getRelativeDate(-1) },
+            { id: 2, name: "Espinafres Frescos", category: "Frutas e Legumes", location: "Frigorífico", qty: "200g", expiry: getRelativeDate(0) },
+            { id: 3, name: "Peito de Frango", category: "Carne e Peixe", location: "Frigorífico", qty: "450g", expiry: getRelativeDate(2) },
+            { id: 4, name: "Leite Meio-Gordo", category: "Laticínios", location: "Frigorífico", qty: "1 Litro", expiry: getRelativeDate(4) },
+            { id: 5, name: "Pão de Forma Integral", category: "Padaria", location: "Armário", qty: "1 embalagem", expiry: getRelativeDate(5) },
+            { id: 6, name: "Ervilhas Ultracongeladas", category: "Frutas e Legumes", location: "Congelador", qty: "500g", expiry: getRelativeDate(45) },
+            { id: 7, name: "Arroz Agulha", category: "Mercearia", location: "Armário", qty: "1 kg", expiry: getRelativeDate(120) }
+        ];
+
+        const initialShoppingList = [
+            { id: 101, name: "Ovos M (Dúzia)", checked: false, autoAdded: false },
+            { id: 102, name: "Maçãs Gala", checked: true, autoAdded: false }
+        ];
+
+        // Histórico simulado para alimentar a secção de Análise de Hábitos e Sugestões Inteligentes
+        const initialStats = {
+            consumed: 18,
+            wasted: 4,
+            wastedHistory: [
+                {
+                    name: "Iogurtes Naturais",
+                    timesWasted: 3,
+                    recommendation: "Sugerimos reduzir a quantidade comprada de 4 para 2 unidades.",
+                    type: "reduce"
+                },
+                {
+                    name: "Espinafres Frescos",
+                    timesWasted: 2,
+                    recommendation: "Alternativa sugerida: Optar por espinafres congelados para maior durabilidade.",
+                    type: "alternative"
+                },
+                {
+                    name: "Coentros Frescos",
+                    timesWasted: 2,
+                    recommendation: "Evitar comprar novamente esta semana ou congelar após a compra.",
+                    type: "avoid"
+                }
+            ]
+        };
+
+        // Estado da Aplicação
+        let state = {
+            viewport: 'desktop', // 'desktop' | 'tablet' | 'mobile'
+            currentTab: 'inventario',
+            locationFilter: 'Todos',
+            searchQuery: '',
+            products: JSON.parse(JSON.stringify(initialProducts)),
+            shoppingList: JSON.parse(JSON.stringify(initialShoppingList)),
+            stats: JSON.parse(JSON.stringify(initialStats)),
+            pendingRestockProduct: null
+        };
+
+        // Alternar vista entre Computador, Tablet e Telemóvel
+        function setViewport(mode, skipRender = false) {
+            state.viewport = mode;
+            const shell = document.getElementById('device-shell');
+            const sidebar = document.getElementById('sidebar-nav');
+            const bottomNav = document.getElementById('bottom-nav');
+            const mobileStatus = document.getElementById('mobile-status-bar');
+            const mobileBrand = document.getElementById('mobile-header-brand');
+            const desktopTitle = document.getElementById('desktop-header-title');
+            const headerAddBtn = document.getElementById('header-add-btn');
+            const sidebarLabels = document.querySelectorAll('.sidebar-label');
+
+            // Atualizar botões do seletor no topo
+            document.querySelectorAll('.vp-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-emerald-700', 'shadow-xs', 'font-semibold');
+                btn.classList.add('text-slate-600', 'font-medium');
+            });
+            const activeVpBtn = document.getElementById(`vp-${mode}`);
+            if (activeVpBtn) {
+                activeVpBtn.classList.remove('text-slate-600', 'font-medium');
+                activeVpBtn.classList.add('bg-white', 'text-emerald-700', 'shadow-xs', 'font-semibold');
+            }
+
+            if (mode === 'desktop') {
+                shell.className = 'relative w-full max-w-6xl h-[82vh] min-h-[640px] bg-slate-50 rounded-3xl shadow-2xl border border-slate-300/90 overflow-hidden flex flex-col transition-all duration-300 ease-out';
+                sidebar.classList.remove('hidden', 'w-20', 'items-center');
+                sidebar.classList.add('flex', 'w-64');
+                sidebarLabels.forEach(el => el.classList.remove('hidden'));
+                bottomNav.classList.add('hidden');
+                bottomNav.classList.remove('flex');
+                mobileStatus.classList.add('hidden');
+                mobileStatus.classList.remove('flex');
+                mobileBrand.classList.add('hidden');
+                mobileBrand.classList.remove('flex');
+                desktopTitle.classList.remove('hidden');
+                headerAddBtn.classList.remove('hidden');
+                headerAddBtn.classList.add('flex');
+            } else if (mode === 'tablet') {
+                shell.className = 'relative w-full max-w-[820px] h-[84vh] min-h-[680px] bg-slate-50 rounded-[2rem] shadow-2xl border-[6px] border-slate-800 overflow-hidden flex flex-col transition-all duration-300 ease-out';
+                sidebar.classList.remove('hidden', 'w-64');
+                sidebar.classList.add('flex', 'w-20', 'items-center');
+                sidebarLabels.forEach(el => el.classList.add('hidden'));
+                bottomNav.classList.add('hidden');
+                bottomNav.classList.remove('flex');
+                mobileStatus.classList.add('hidden');
+                mobileStatus.classList.remove('flex');
+                mobileBrand.classList.add('hidden');
+                mobileBrand.classList.remove('flex');
+                desktopTitle.classList.remove('hidden');
+                headerAddBtn.classList.remove('hidden');
+                headerAddBtn.classList.add('flex');
+            } else if (mode === 'mobile') {
+                shell.className = 'relative w-full max-w-[410px] h-[810px] max-h-[85vh] bg-slate-50 rounded-[2.5rem] shadow-2xl border-[8px] border-slate-900 overflow-hidden flex flex-col transition-all duration-300 ease-out';
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('flex');
+                bottomNav.classList.remove('hidden');
+                bottomNav.classList.add('flex');
+                mobileStatus.classList.remove('hidden');
+                mobileStatus.classList.add('flex');
+                mobileBrand.classList.remove('hidden');
+                mobileBrand.classList.add('flex');
+                desktopTitle.classList.add('hidden');
+                headerAddBtn.classList.add('hidden');
+                headerAddBtn.classList.remove('flex');
+            }
+
+            if (!skipRender) render();
+        }
+
+        // Formatar etiqueta visual de validade
+        function getExpiryBadge(days) {
+            if (days < 0) {
+                return {
+                    label: `Expirado há ${Math.abs(days)} dia${Math.abs(days) > 1 ? 's' : ''}`,
+                    classes: 'bg-red-100 text-red-700 border-red-200',
+                    dot: 'bg-red-500',
+                    urgent: true
+                };
+            } else if (days === 0) {
+                return {
+                    label: 'Expira hoje!',
+                    classes: 'bg-amber-100 text-amber-800 border-amber-300',
+                    dot: 'bg-amber-500 animate-ping',
+                    urgent: true
+                };
+            } else if (days <= 3) {
+                return {
+                    label: `Expira em ${days} dia${days > 1 ? 's' : ''}`,
+                    classes: 'bg-amber-100 text-amber-800 border-amber-200',
+                    dot: 'bg-amber-500',
+                    urgent: true
+                };
+            } else {
+                return {
+                    label: `Válido (${days} dias)`,
+                    classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    dot: 'bg-emerald-500',
+                    urgent: false
+                };
+            }
+        }
+
+        // Ícone por categoria
+        function getCategoryIcon(category) {
+            switch (category) {
+                case 'Laticínios': return 'milk';
+                case 'Frutas e Legumes': return 'carrot';
+                case 'Carne e Peixe': return 'beef';
+                case 'Padaria': return 'croissant';
+                case 'Mercearia': return 'package';
+                default: return 'shopping-bag';
+            }
+        }
+
+        // Mostrar mensagem Toast temporária
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'warning' ? 'bg-amber-600' : (type === 'danger' ? 'bg-red-600' : 'bg-slate-900');
+            toast.className = `${bgColor} text-white text-xs font-medium px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2 animate-slide-up`;
+            toast.innerHTML = `<i data-lucide="${type === 'danger' ? 'trash-2' : 'sparkles'}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+
+        // Atualizar contador de notificações
+        function updateNotifications() {
+            const urgentProducts = state.products.filter(p => getDaysUntilExpiry(p.expiry) <= 3);
+            const badge = document.getElementById('notif-badge');
+            badge.textContent = urgentProducts.length;
+            badge.classList.toggle('hidden', urgentProducts.length === 0);
+
+            const list = document.getElementById('notif-list');
+            if (urgentProducts.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Sem alertas urgentes! Todos os produtos estão dentro do prazo.</p>`;
+                return;
+            }
+
+            // Ordenar por mais urgente
+            urgentProducts.sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+
+            list.innerHTML = urgentProducts.map(p => {
+                const days = getDaysUntilExpiry(p.expiry);
+                const isExpired = days < 0;
+                return `
+                    <div class="p-3 rounded-2xl border ${isExpired ? 'bg-red-50/70 border-red-200' : 'bg-amber-50/70 border-amber-200'} flex items-center justify-between gap-2">
+                        <div>
+                            <p class="text-xs font-bold ${isExpired ? 'text-red-800' : 'text-amber-900'}">${p.name}</p>
+                            <p class="text-[11px] ${isExpired ? 'text-red-600' : 'text-amber-700'}">
+                                ${isExpired ? `Expirou há ${Math.abs(days)} dia(s)` : (days === 0 ? 'Expira hoje — consumir prioritariamente!' : `Expira em ${days} dia(s)`)}
+                            </p>
+                        </div>
+                        <div class="flex gap-1.5 shrink-0">
+                            <button onclick="markConsumed(${p.id}); toggleNotifications();" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-semibold hover:bg-emerald-700 cursor-pointer">
+                                Consumido
+                            </button>
+                            <button onclick="markDiscarded(${p.id}); toggleNotifications();" class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-red-600 text-[10px] font-semibold hover:bg-red-50 cursor-pointer">
+                                Descartar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Alternar separadores de navegação
+        function switchTab(tab) {
+            state.currentTab = tab;
+
+            // Atualizar barra inferior (Telemóvel)
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-emerald-700', 'bg-emerald-50/80');
+                btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.getElementById(`nav-${tab}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400');
+                activeBtn.classList.add('text-emerald-700', 'bg-emerald-50/80');
+            }
+
+            // Atualizar menu lateral (Computador e Tablet)
+            document.querySelectorAll('.side-btn').forEach(btn => {
+                btn.classList.remove('text-emerald-700', 'bg-emerald-50', 'font-semibold');
+                btn.classList.add('text-slate-600', 'font-medium');
+            });
+            const activeSideBtn = document.getElementById(`side-${tab}`);
+            if (activeSideBtn) {
+                activeSideBtn.classList.remove('text-slate-600', 'font-medium');
+                activeSideBtn.classList.add('text-emerald-700', 'bg-emerald-50', 'font-semibold');
+            }
+
+            // Atualizar título no cabeçalho Desktop/Tablet
+            const titles = {
+                inventario: ['Despensa & Controlo de Validades', 'Produtos ordenados automaticamente por data de expiração'],
+                compras: ['Lista de Compras Inteligente', 'Gestão de reposição automática e planeamento de compras'],
+                habitos: ['Análise de Hábitos & Poupança', 'Monitorização de desperdício e recomendações personalizadas'],
+                sobre: ['Sobre o Projeto Expyro', 'Equipa de desenvolvimento CTJF • LAPR1 (ISEP)']
+            };
+            const [title, subtitle] = titles[tab] || titles.inventario;
+            document.getElementById('page-title').textContent = title;
+            document.getElementById('page-subtitle').textContent = subtitle;
+
+            render();
+        }
+
+        // Renderizar Ecrã Principal: Inventário / Despensa
+        function renderInventory() {
+            // Ordenação automática por ordem crescente de data de validade (regra central do Expyro)
+            const sorted = [...state.products].sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+            
+            const filtered = sorted.filter(p => {
+                const matchesLoc = state.locationFilter === 'Todos' || p.location === state.locationFilter;
+                const matchesSearch = p.name.toLowerCase().includes(state.searchQuery.toLowerCase());
+                return matchesLoc && matchesSearch;
+            });
+
+            const urgentCount = state.products.filter(p => getDaysUntilExpiry(p.expiry) <= 3).length;
+            const gridCols = state.viewport === 'desktop' ? 'grid-cols-2 lg:grid-cols-3' : (state.viewport === 'tablet' ? 'grid-cols-2' : 'grid-cols-1');
+
+            return `
+                <!-- Cartão de Resumo Rápido -->
+                <div class="bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-2xl p-4 sm:p-5 text-white shadow-md">
+                    <div class="flex flex-wrap justify-between items-start gap-2">
+                        <div>
+                            <p class="text-emerald-100 text-xs font-medium">A sua despensa hoje</p>
+                            <h2 class="text-xl sm:text-2xl font-bold mt-0.5">${state.products.length} produtos registados</h2>
+                        </div>
+                        <span class="bg-white/20 backdrop-blur-xs text-white text-[11px] font-semibold px-3 py-1 rounded-full">
+                            Ordenado por validade
+                        </span>
+                    </div>
+                    ${urgentCount > 0 ? `
+                        <div class="mt-3 pt-3 border-t border-white/15 flex items-center justify-between text-xs">
+                            <span class="flex items-center gap-1.5 text-amber-200 font-medium">
+                                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                                ${urgentCount} ${urgentCount === 1 ? 'produto requer atenção imediata' : 'produtos requerem atenção imediata'}
+                            </span>
+                            <button onclick="toggleNotifications()" class="underline font-semibold text-white cursor-pointer">Ver alertas</button>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Barra de Pesquisa e Filtros por Localização -->
+                <div class="flex flex-col ${state.viewport !== 'mobile' ? 'sm:flex-row sm:items-center justify-between' : ''} gap-3">
+                    <div class="relative flex-1 max-w-md">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+                        <input type="text" value="${state.searchQuery}" oninput="state.searchQuery = this.value; render();" placeholder="Pesquisar na despensa..." class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+                        ${['Todos', 'Frigorífico', 'Armário', 'Congelador'].map(loc => `
+                            <button onclick="state.locationFilter = '${loc}'; render();" class="px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${state.locationFilter === loc ? 'bg-slate-800 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}">
+                                ${loc}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Grelha Responsiva de Produtos Ordenados -->
+                <div class="grid ${gridCols} gap-3">
+                    ${filtered.length === 0 ? `
+                        <div class="col-span-full bg-white rounded-2xl p-10 text-center border border-slate-100">
+                            <i data-lucide="package-open" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
+                            <p class="text-sm font-semibold text-slate-700">Nenhum produto encontrado</p>
+                            <p class="text-xs text-slate-400 mt-1">Registe alimentos na despensa para começar a monitorizar as validades.</p>
+                        </div>
+                    ` : filtered.map(p => {
+                        const days = getDaysUntilExpiry(p.expiry);
+                        const badge = getExpiryBadge(days);
+                        return `
+                            <div class="bg-white rounded-2xl p-4 border ${days < 0 ? 'border-red-200 bg-red-50/20' : 'border-slate-200/70'} shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                                            <i data-lucide="${getCategoryIcon(p.category)}" class="w-5 h-5"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-slate-900 text-sm leading-tight">${p.name}</h3>
+                                            <div class="flex items-center gap-2 text-[11px] text-slate-500 mt-1">
+                                                <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i> ${p.location}</span>
+                                                <span>•</span>
+                                                <span>${p.qty}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${badge.classes} flex items-center gap-1.5 shrink-0">
+                                        <span class="w-1.5 h-1.5 rounded-full ${badge.dot}"></span>
+                                        ${badge.label}
+                                    </span>
+                                </div>
+
+                                <!-- Botões de Ação Rápida: Consumido vs Descartado -->
+                                <div class="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                    <span class="text-[11px] text-slate-400">Val: ${new Date(p.expiry).toLocaleDateString('pt-PT')}</span>
+                                    <div class="flex gap-1.5">
+                                        <button onclick="markConsumed(${p.id})" class="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer">
+                                            <i data-lucide="check" class="w-3.5 h-3.5"></i> Consumido
+                                        </button>
+                                        <button onclick="markDiscarded(${p.id})" class="px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-600 text-red-600 hover:text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer">
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Descartado
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Renderizar Ecrã: Lista de Compras Personalizada
+        function renderShoppingList() {
+            const gridCols = state.viewport !== 'mobile' ? 'grid-cols-2' : 'grid-cols-1';
+            return `
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/70 shadow-xs">
+                    <h2 class="font-bold text-slate-900 text-base">Lista de Compras Inteligente</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Adicione itens manualmente ou reponha automaticamente os produtos consumidos.</p>
+
+                    <form onsubmit="handleAddShoppingItem(event)" class="mt-3.5 flex gap-2 max-w-xl">
+                        <input type="text" id="new-shop-item" required placeholder="Adicionar produto à lista..." class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <button type="submit" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer">
+                            Adicionar
+                        </button>
+                    </form>
+                </div>
+
+                <div class="grid ${gridCols} gap-2.5">
+                    ${state.shoppingList.length === 0 ? `
+                        <p class="col-span-full text-xs text-slate-400 text-center py-8">A sua lista de compras está vazia.</p>
+                    ` : state.shoppingList.map(item => `
+                        <div class="bg-white p-3.5 rounded-2xl border border-slate-200/70 flex items-center justify-between gap-3">
+                            <button onclick="toggleShoppingItem(${item.id})" class="flex items-center gap-3 text-left flex-1 cursor-pointer">
+                                <div class="w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${item.checked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white'}">
+                                    ${item.checked ? '<i data-lucide="check" class="w-3.5 h-3.5 stroke-[3]"></i>' : ''}
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold ${item.checked ? 'line-through text-slate-400' : 'text-slate-800'}">${item.name}</p>
+                                    ${item.autoAdded ? '<span class="text-[10px] text-emerald-600 font-medium">Sugerido após consumo</span>' : ''}
+                                </div>
+                            </button>
+                            <button onclick="removeShoppingItem(${item.id})" class="text-slate-300 hover:text-red-500 p-1 cursor-pointer">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Renderizar Ecrã: Análise de Hábitos e Sugestões Inteligentes (Diferencial do Expyro)
+        function renderHabits() {
+            const total = state.stats.consumed + state.stats.wasted;
+            const consumedPct = total > 0 ? Math.round((state.stats.consumed / total) * 100) : 100;
+            const wastedPct = 100 - consumedPct;
+            const estimatedSavings = (state.stats.consumed * 1.50).toFixed(2).replace('.', ',');
+            const gridCols = state.viewport !== 'mobile' ? 'grid-cols-2' : 'grid-cols-1';
+
+            return `
+                <div class="grid ${gridCols} gap-4">
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/70 shadow-xs space-y-3.5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="font-bold text-slate-900 text-base">Análise de Consumo</h2>
+                                <p class="text-xs text-slate-500">Monitorização de hábitos domésticos</p>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
+                                ${consumedPct}% Aproveitamento
+                            </span>
+                        </div>
+
+                        <!-- Barra de Progresso Visual -->
+                        <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden flex">
+                            <div style="width: ${consumedPct}%" class="bg-emerald-500 h-full transition-all duration-500"></div>
+                            <div style="width: ${wastedPct}%" class="bg-red-400 h-full transition-all duration-500"></div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 pt-1">
+                            <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-100">
+                                <p class="text-[11px] text-emerald-700 font-medium">Consumidos</p>
+                                <p class="text-base sm:text-lg font-extrabold text-emerald-900">${state.stats.consumed}</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-red-50/70 border border-red-100">
+                                <p class="text-[11px] text-red-700 font-medium">Desperdiçados</p>
+                                <p class="text-base sm:text-lg font-extrabold text-red-900">${state.stats.wasted}</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-amber-50/80 border border-amber-100">
+                                <p class="text-[11px] text-amber-800 font-medium">Poupança</p>
+                                <p class="text-base sm:text-lg font-extrabold text-amber-900">${estimatedSavings} €</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sugestões Inteligentes Personalizadas -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center gap-1.5 px-1">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+                            <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Recomendações Inteligentes</h3>
+                        </div>
+
+                        ${state.stats.wastedHistory.map(item => `
+                            <div class="bg-white rounded-2xl p-3.5 border border-slate-200/70 shadow-xs space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-slate-900 text-xs">${item.name}</span>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                                        Descartado ${item.timesWasted}x
+                                    </span>
+                                </div>
+                                <div class="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/70 flex items-start gap-2">
+                                    <i data-lucide="lightbulb" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                                    <p class="text-xs text-amber-950 leading-relaxed">${item.recommendation}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Renderizar Ecrã: Sobre o Projeto Expyro (Equipa ISEP - LAPR1)
+        function renderAbout() {
+            const gridCols = state.viewport !== 'mobile' ? 'grid-cols-2' : 'grid-cols-1';
+            return `
+                <div class="grid ${gridCols} gap-4">
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/70 shadow-xs space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md">
+                                <i data-lucide="leaf" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h2 class="font-bold text-slate-900 text-base">Projeto Expyro</h2>
+                                <p class="text-xs text-slate-500">ISEP • Licenciatura em Engenharia Informática (LAPR1)</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            O <strong>Expyro</strong> foi desenvolvido para combater o desperdício alimentar doméstico através do controlo de validades ordenado, notificações preventivas e análise inteligente dos hábitos de consumo.
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/70 shadow-xs space-y-2.5">
+                        <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Equipa de Desenvolvimento (CTJF)</h3>
+                        <ul class="space-y-2 text-xs">
+                            <li class="flex justify-between items-center p-2.5 rounded-xl bg-slate-50">
+                                <span class="font-semibold text-slate-800">Filipa Costa</span>
+                                <span class="text-slate-500">1261055 • Conteúdos</span>
+                            </li>
+                            <li class="flex justify-between items-center p-2.5 rounded-xl bg-slate-50">
+                                <span class="font-semibold text-slate-800">Tiago Andrade</span>
+                                <span class="text-slate-500">1261483 • Desenv. Web</span>
+                            </li>
+                            <li class="flex justify-between items-center p-2.5 rounded-xl bg-slate-50">
+                                <span class="font-semibold text-slate-800">Caterina Zille</span>
+                                <span class="text-slate-500">1261160 • Design & UX</span>
+                            </li>
+                            <li class="flex justify-between items-center p-2.5 rounded-xl bg-slate-50">
+                                <span class="font-semibold text-slate-800">João Barroso</span>
+                                <span class="text-slate-500">1260917 • Acessibilidade</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Ações Interativas
+        function markConsumed(id) {
+            const product = state.products.find(p => p.id === id);
+            if (!product) return;
+
+            state.products = state.products.filter(p => p.id !== id);
+            state.stats.consumed += 1;
+            state.pendingRestockProduct = product;
+
+            document.getElementById('restock-text').innerHTML = `Consumiu <strong>${product.name}</strong>. Deseja adicioná-lo à sua lista de compras personalizada?`;
+            document.getElementById('restock-modal').classList.remove('hidden');
+            render();
+        }
+
+        function closeRestockModal(addToCart) {
+            if (addToCart && state.pendingRestockProduct) {
+                state.shoppingList.unshift({
+                    id: Date.now(),
+                    name: state.pendingRestockProduct.name,
+                    checked: false,
+                    autoAdded: true
+                });
+                showToast(`"${state.pendingRestockProduct.name}" adicionado à lista de compras!`);
+            } else {
+                showToast('Produto registado como consumido!');
+            }
+            state.pendingRestockProduct = null;
+            document.getElementById('restock-modal').classList.add('hidden');
+            render();
+        }
+
+        function markDiscarded(id) {
+            const product = state.products.find(p => p.id === id);
+            if (!product) return;
+
+            state.products = state.products.filter(p => p.id !== id);
+            state.stats.wasted += 1;
+
+            // Atualizar ou adicionar ao histórico de produtos desperdiçados para gerar sugestão inteligente
+            const existing = state.stats.wastedHistory.find(h => h.name.toLowerCase().includes(product.name.split(' ')[0].toLowerCase()));
+            if (existing) {
+                existing.timesWasted += 1;
+            } else {
+                state.stats.wastedHistory.unshift({
+                    name: product.name,
+                    timesWasted: 1,
+                    recommendation: `Atenção: "${product.name}" expirou sem consumo. Recomendamos comprar em menor quantidade.`,
+                    type: 'reduce'
+                });
+            }
+
+            showToast(`"${product.name}" registado como desperdício. Hábitos atualizados.`, 'danger');
+            render();
+        }
+
+        // Gestão do Modal Adicionar Produto
+        function openAddModal() {
+            document.getElementById('prod-expiry').value = getRelativeDate(3);
+            document.getElementById('add-modal').classList.remove('hidden');
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+            document.getElementById('add-product-form').reset();
+        }
+
+        function simulateBarcodeScan() {
+            const sample = barcodeSamples[sampleIndex % barcodeSamples.length];
+            sampleIndex++;
+            document.getElementById('prod-name').value = sample.name;
+            document.getElementById('prod-category').value = sample.category;
+            document.getElementById('prod-location').value = sample.location;
+            document.getElementById('prod-qty').value = sample.qty;
+            document.getElementById('prod-expiry').value = getRelativeDate(sample.days);
+            showToast('Código de barras lido com sucesso!');
+        }
+
+        function handleAddProduct(e) {
+            e.preventDefault();
+            const newProd = {
+                id: Date.now(),
+                name: document.getElementById('prod-name').value,
+                category: document.getElementById('prod-category').value,
+                location: document.getElementById('prod-location').value,
+                qty: document.getElementById('prod-qty').value,
+                expiry: document.getElementById('prod-expiry').value
+            };
+            state.products.push(newProd);
+            closeAddModal();
+            switchTab('inventario');
+            showToast(`"${newProd.name}" adicionado à despensa!`);
+        }
+
+        // Gestão da Lista de Compras
+        function handleAddShoppingItem(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-shop-item');
+            if (!input.value.trim()) return;
+            state.shoppingList.unshift({
+                id: Date.now(),
+                name: input.value.trim(),
+                checked: false,
+                autoAdded: false
+            });
+            input.value = '';
+            render();
+        }
+
+        function toggleShoppingItem(id) {
+            const item = state.shoppingList.find(i => i.id === id);
+            if (item) item.checked = !item.checked;
+            render();
+        }
+
+        function removeShoppingItem(id) {
+            state.shoppingList = state.shoppingList.filter(i => i.id !== id);
+            render();
+        }
+
+        // Notificações
+        function toggleNotifications() {
+            const modal = document.getElementById('notif-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Repor Dados da Demonstração
+        function resetDemoData() {
+            state.products = JSON.parse(JSON.stringify(initialProducts));
+            state.shoppingList = JSON.parse(JSON.stringify(initialShoppingList));
+            state.stats = JSON.parse(JSON.stringify(initialStats));
+            state.locationFilter = 'Todos';
+            state.searchQuery = '';
+            switchTab('inventario');
+            showToast('Dados de demonstração repostos!');
+        }
+
+        // Renderização Principal
+        function render() {
+            const content = document.getElementById('app-content');
+            if (state.currentTab === 'inventario') content.innerHTML = renderInventory();
+            else if (state.currentTab === 'compras') content.innerHTML = renderShoppingList();
+            else if (state.currentTab === 'habitos') content.innerHTML = renderHabits();
+            else if (state.currentTab === 'sobre') content.innerHTML = renderAbout();
+
+            // Atualizar indicadores de itens pendentes na lista de compras (Mobile e Desktop)
+            const uncheckedCount = state.shoppingList.filter(i => !i.checked).length;
+            document.getElementById('cart-count-badge').classList.toggle('hidden', uncheckedCount === 0);
+            
+            const sideCartBadge = document.getElementById('side-cart-badge');
+            if (sideCartBadge) {
+                sideCartBadge.textContent = uncheckedCount;
+                sideCartBadge.classList.toggle('hidden', uncheckedCount === 0 || state.viewport === 'tablet');
+            }
+
+            // Atualizar poupança estimada na barra lateral
+            const savingsEl = document.getElementById('sidebar-savings');
+            if (savingsEl) {
+                savingsEl.textContent = `${(state.stats.consumed * 1.50).toFixed(2).replace('.', ',')} €`;
+            }
+
+            updateNotifications();
+            lucide.createIcons();
+        }
+
+        // Inicializar relógio, detetar largura inicial e renderizar app
+        window.onload = function () {
+            const now = new Date();
+            document.getElementById('clock-time').textContent = now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            
+            // Adaptação automática inicial consoante o tamanho do ecrã
+            if (window.innerWidth < 640) setViewport('mobile', true);
+            else if (window.innerWidth < 1024) setViewport('tablet', true);
+            else setViewport('desktop', true);
+
+            render();
+        };
+    </script>
+</body>
+</html>
